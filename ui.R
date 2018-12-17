@@ -2,6 +2,7 @@
 
 library(shiny)
 library(shinydashboard)
+library(stringr)
 
 teams <- list(
   "Atlanta Hawks",
@@ -59,8 +60,19 @@ dashboardPage(
       tabPanel(
         h4("NBA Stats/Graphs"),
         selectInput(inputId="teamChoice",
-                    label="Select Team",
-                    choices = teams)),
+                    label=h3("Select Team"),
+                    choices = teams),
+        fluidRow(
+            h2(textOutput('team'))
+        ),
+        fluidRow(
+          column(
+            3,
+            tableOutput('table')
+          )
+        )
+      ),
+        
       tabPanel(
         h4("Fantasy Basketball Analysis")
       )
