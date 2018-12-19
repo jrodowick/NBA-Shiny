@@ -166,6 +166,42 @@ function(input,output) {
       geom_point(data=team_df,mapping = aes(color=PLAYER)) +
       geom_smooth(method = "lm",se=FALSE)
   })
+  
+  output$`team-one` <- renderPlot({
+    team_1 <- read.csv(str_c('/home/jrodowick/NBA-Shiny/team_csv_files/',input$`team-1`,'.csv'))
+    if(input$Xaxis == 'Points Per Game')
+    {
+      ggplot(data = team_1, mapping = aes(x=PPG,y=MIN)) +
+        geom_point() +
+        geom_smooth(method = "lm", se=FALSE) +
+        labs(x='Points Per Game',y='Minutes Played')
+    }
+    else if(input$Xaxis == 'Field Goal %')
+    {
+      ggplot(data = team_1, mapping = aes(x=FGPERC,y=MIN)) +
+        geom_point() +
+        geom_smooth(method = "lm", se=FALSE) +
+        labs(x='Field Goal %',y='Minutes Played')
+    }
+  })
+  output$`team-two` <- renderPlot({
+    team_2 <- read.csv(str_c('/home/jrodowick/NBA-Shiny/team_csv_files/',input$`team-2`,'.csv'))
+    if(input$Xaxis == 'Points Per Game')
+    {
+      ggplot(data = team_2, mapping = aes(x=PPG,y=MIN)) +
+        geom_point() +
+        geom_smooth(method = "lm", se=FALSE) +
+        labs(x='Points Per Game',y='Minutes Played')
+    }
+    else if(input$Xaxis == 'Field Goal %')
+    {
+      ggplot(data = team_2, mapping = aes(x=FGPERC,y=MIN)) +
+        geom_point() +
+        geom_smooth(method = "lm", se=FALSE) +
+        labs(x='Field Goal %',y='Minutes Played')
+    }
+  })
+  
   observeEvent(input$scrapeNBA, {
     showModal(modalDialog(
       title = h2('Web scrape initiated'),

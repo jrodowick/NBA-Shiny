@@ -38,6 +38,39 @@ teams <- list(
   "Washington Wizards"
 )
 
+just_city <- list(
+  "Atlanta",
+  "Boston",
+  "Brooklyn",
+  "Charlotte",
+  "Chicago",
+  "Cleveland",
+  "Dallas",
+  "Denver",
+  "Detroit",
+  "Golden State",
+  "Houston",
+  "Indiana",
+  "LA Clippers",
+  "LA Lakers",
+  "Memphis",
+  "Miami",
+  "Milwaukee",
+  "Minnesota",
+  "New Orleans",
+  "New York",
+  "Oklahoma City",
+  "Orlando",
+  "Philadelphia",
+  "Phoenix",
+  "Portland",
+  "Sacramento",
+  "San Antonio",
+  "Toronto",
+  "Utah",
+  "Washington"
+)
+
 shots <- list(
   "Field Goal %",
   "3 Point %",
@@ -48,7 +81,11 @@ league_choice <- list(
   'Points Per Game',
   'Field Goals Made',
   'Field Goals Attempted'
-  
+)
+
+compare_choice <- list(
+  'Points Per Game',
+  'Field Goal %'
 )
 
 shot_choice <- list(
@@ -165,6 +202,30 @@ dashboardPage(
               )
             ),
             fluidRow(
+              h3('Team comparisons of players minutes',class='text-center'),
+              column(
+                width=5,
+                selectInput(inputId='team-1',
+                            label='Team 1',
+                            choices=teams),
+                plotOutput('team-one')
+              ),
+              column(h4('Select X axis',class='text-center'),
+                id="Xaxis",
+                width=2,
+                selectInput(inputId='Xaxis',
+                            label='X axis',
+                            choices = compare_choice)
+              ),
+              column(
+                width=5,
+                selectInput(inputId='team-2',
+                            label='Team 2',
+                            choices = teams),
+                plotOutput('team-two')
+              )
+            ),
+            fluidRow(
               column(
                 h3('Team Points / Made Shots / Shot attempts',
                    class='text-center'),
@@ -190,8 +251,6 @@ dashboardPage(
                    
           )
         )
-        
-        
       )
     )
   )
