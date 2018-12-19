@@ -44,6 +44,19 @@ shots <- list(
   "Free Throw %"
 )
 
+league_choice <- list(
+  'Points Per Game',
+  'Field Goals Made',
+  'Field Goals Attempted'
+  
+)
+
+shot_choice <- list(
+  '2 point %',
+  '3 point %',
+  'FG %'
+)
+
 
 dashboardPage(
   dashboardHeader(
@@ -51,8 +64,8 @@ dashboardPage(
   ),
   dashboardSidebar(
     img(id="logo", src="NBA-logo.jpg"),
-    actionButton(inputId="scrapeNBA", label="Scrape NBA stats", class="text-center"),
-    actionButton(inputId="scrapeFantasy", label="Scrape Fantasy stats")
+    actionButton(inputId="scrapeNBA", label="Scrape NBA stats", class="text-center")
+    #actionButton(inputId="scrapeFantasy", label="Scrape Fantasy stats")
   ),
   dashboardBody(
     tags$head(
@@ -76,21 +89,27 @@ dashboardPage(
                h2(textOutput('team'))
              ),
              fluidRow(
-               h3('What factors into minutes played',
+               h3('Looking at what determines a players minutes in game',
                   class='text-center'),
                column(width=4,
-                      h4('Minutes Played vs Shot Make %',
-                         class='text-center'),
+                      h4('Minutes Played vs Shot Make %'),
+                      selectInput(inputId='shotType',
+                                  label='',
+                                  choices = shot_choice ),
                       plotOutput('fg-min')
                ),
                column(width=4,
-                      h4('Minutes Played vs Assists and Turnovers per game',
-                         class='text-center'),
+                      h4('Minutes Played vs Assists and Turnovers per game'),
+                      selectInput(inputId='ASTTO',
+                                  label='',
+                                  choices = c('Assists','Turnovers','Ast/To Ratio')),
                       plotOutput('AstTur-min')
                ),
                column(width=4,
-                      h4('Minutes Played vs Steal and Blocks per game',
-                         class='text-center'),
+                      h4('Minutes Played vs Steal and Blocks per game'),
+                      selectInput(inputId='STLBLK',
+                                  label='',
+                                  choices = c('Steals','Blocks','Rebounds')),
                       plotOutput('StlBlk-min')
                )
              ),
@@ -100,6 +119,12 @@ dashboardPage(
                     class='text-center'),
                  width=4,
                  plotOutput('per-min')
+               ),
+               column(
+                 h4('Minutes played vs Games started',
+                    class='text-center'),
+                 width=8,
+                 plotOutput('games-started')
                )
              ),
              fluidRow(
@@ -138,16 +163,35 @@ dashboardPage(
                 plotOutput('win-shot')
                 
               )
+            ),
+            fluidRow(
+              column(
+                h3('Team Points / Made Shots / Shot attempts',
+                   class='text-center'),
+                width=10,
+                plotOutput('box')
+              ),
+              column(
+                id='columnSelect',
+                width=2,
+                selectInput(inputId='columnChoice',
+                            label='Select X axis',
+                            choices = league_choice)
+              )
+            ),
+            fluidRow(
+              column(
+                width=6,
+                id='leagueData',
+                DT::dataTableOutput('league-table')
+                
+              )
             )
                    
           )
         )
         
         
-      ),
-        
-      tabPanel(
-        h4("Fantasy Basketball Analysis")
       )
     )
   )
