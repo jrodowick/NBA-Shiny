@@ -1,6 +1,8 @@
 library(xml2)
 library(httr)
 library(dplyr)
+library(rvest)
+library(stringr)
 
 teams <- list(
   atl <- c("Atlanta Hawks",'atl'),
@@ -35,56 +37,186 @@ teams <- list(
   was <- c("Washington Wizards",'was')
 )
 
+team_prepend <- 'http://www.espn.com/nba/team/stats/_/name/'
 
-teams_offense_url <- "http://www.espn.com/nba/statistics/team/_/stat/offense-per-game"
-team_prepend <- "http://www.espn.com/nba/team/stats/_/name/"
+o_url <- 'http://www.espn.com/nba/statistics/team/_/stat/offense-per-game'
+d_url <- 'http://www.espn.com/nba/statistics/team/_/stat/defense-per-game'
 
-teams_offense <- read_html(teams_offense_url)
+league_url <- 'http://www.espn.com/nba/standings/_/group/league'
 
-tables <- html_nodes(teams_offense, "table")
-
-col_names <- tables %>%
-  xml_child(1) %>%
-  xml_find_all("td") %>%
-  xml_text()
-
-player_stats <- tables %>%
-  xml_find_all(".//tr[@class != 'colhead']") %>%
-  xml_find_all("td") %>%
-  xml_text()
-
-
-team_off_df <- data.frame(matrix(player_stats, nrow = 30, ncol = 14, byrow = TRUE), stringsAsFactors = FALSE)
-colnames(team_off_df) <- col_names
-
-team_off_df <- team_off_df %>%
-  select(-c(RK))
-
-write.csv(team_off_df, 'NBA-Shiny/teamOffense.csv')
-
-
-
-scrapeTeam <-function(prepend, append, filename) {
-  team_url <- str_c(prepend, append)
-  team <- read_html(team_url)
-  team_table <- html_nodes(team, "table")
-  team_col_name <- team_table %>%
-    xml_child(2) %>%
+###  Scrape League wins and losses ###
+scrapeLeague <- function(league_url,o_url,d_url) {
+  
+  teams_offense <- read_html(o_url)
+  teams_defense <- read_html(d_url)
+  
+  o_tables <- html_nodes(teams_offense, "table")
+  d_tables <- html_nodes(teams_defense, "table")
+  
+  o_col_names <- o_tables %>%
+    xml_child(1) %>%
     xml_find_all("td") %>%
     xml_text()
   
-  team_stats <- team_table %>%
+  offense_stats <- o_tables %>%
+    xml_find_all(".//tr[@class != 'colhead']") %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  d_col_names <- d_tables %>%
+    xml_child(1) %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  defense_stats <- d_tables %>%
+    xml_find_all(".//tr[@class != 'colhead']") %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  
+  team_off_df <- data.frame(matrix(offense_stats, nrow = 30, ncol = 14, byrow = TRUE), stringsAsFactors = FALSE)
+  team_def_df <- data.frame(matrix(defense_stats, nrow = 30, ncol = 14, byrow = TRUE), stringsAsFactors = FALSE)
+  
+  col_names <- c('TEAM','PTS',	'FGM',	'FGA',	'FGPERC',	'THRPM',	'THRPA','THRPPERC',	'FTM',	'FTA',	'FTPERC',	'PPS',	'AFG')
+  
+  team_off_df <- team_off_df[,-1]
+  team_def_df <- team_def_df[,-1]
+  
+  colnames(team_off_df) <- col_names
+  colnames(team_def_df) <- col_names
+  
+  
+  
+  
+  #write.csv(team_off_df, '/home/jrodowick/NBA-Shiny/teamOffense.csv')
+  write.csv(team_def_df, '/home/jrodowick/NBA-Shiny/teamDefense.csv')
+  
+#########################################################################################
+  
+  league <- read_html(league_url)
+  league_table <- html_nodes(league,"table")
+  
+  team_names <- league_table[2] %>%
+    xml_find_all(".//tr[@class != 'stathead']") %>%
+    xml_find_all("td") %>%
+    xml_find_all("div") %>%
+    xml_find_all("span") %>%
+    xml_text()
+  
+  
+  i <- 1
+  new_teams <- array()
+  
+  for(e in seq(3,90,by=3)) {
+    new_teams[i] <- team_names[e]
+    i <- i+1
+  }
+  
+  e <- 1
+  for(team in new_teams) {
+    if(team == 'Los Angeles Lakers')
+    {
+      team <- 'LA Lakers'
+    }
+    else if(team == 'LA Clippers')
+    {
+      team <- 'LA Clippers'
+    }
+    else if(team == 'Oklahoma City Thunder')
+    {
+      team <- 'Oklahoma City'
+    }
+    else if(team == 'New York Knicks')
+    {
+      team <- 'New York'
+    }
+    else if(team == 'Golden State Warriors')
+    {
+      team <- 'Golden State'
+    }
+    else if(team == 'New Orleans Pelicans')
+    {
+      team <- 'New Orleans'
+    }
+    else if(team == 'San Antonio Spurs')
+    {
+      team <- 'San Antonio'
+    }
+    else 
+    {
+      team <- strsplit(team,' ')[[1]][1]
+    }
+    new_teams[e] <- team
+    e <- e + 1
+  }
+  print(new_teams)
+  
+  league_stats <- league_table[3] %>%
     xml_find_all(".//tr[@class != 'stathead']") %>%
     xml_find_all("td") %>%
     xml_text()
   
-  team_df <- data.frame(matrix(team_stats, nrow = 17, ncol = 15, byrow = TRUE), stringsAsFactors = FALSE)
-  team_df <- team_df[-1,]
-  colnames(team_df) <- team_col_name
+  cols <- c('TEAM','Wins','Loss','PCT','GB','Home','Away','DIV','CONF','PPG','OppPPG','DIFF','STRK','L10')
   
-  write.csv(team_df, str_c('NBA-Shiny/',filename))
+  league_df <- data.frame(matrix(league_stats, nrow = 30, ncol = 13, byrow = TRUE), stringsAsFactors = FALSE)
+  
+  league_df <- cbind(new_teams,league_df)
+  
+  colnames(league_df) <- cols
+  
+  final_df <- left_join(team_off_df, league_df)
+  
+  write.csv(final_df, str_c('/home/jrodowick/NBA-Shiny/leagueInfo.csv'),append = FALSE)
+  
+  
 }
 
-for(i in teams) {
-  scrapeTeam(team_prepend, i[2], str_c(i[1],'.csv'))
+#### Scrape Each teams players ###
+scrapePlayers <-function(prepend, append, filename) {
+  team_url <- str_c(prepend, append)
+  team <- read_html(team_url)
+  team_table <- html_nodes(team, "table")
+  
+  game_stats <- team_table[1] %>%
+    xml_find_all(".//tr[@class != 'stathead']") %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  team_col_name <- team_table[1] %>%
+    xml_child(2) %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  
+  shooting_stats <- team_table[2] %>%
+    xml_find_all(".//tr[@class != 'stathead']") %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  shooting_col_name <- team_table[2] %>%
+    xml_child(2) %>%
+    xml_find_all("td") %>%
+    xml_text()
+  
+  game_df <- data.frame(matrix(game_stats, nrow = 15, ncol = 15, byrow = TRUE), stringsAsFactors = FALSE)
+  shooting_df <- data.frame(matrix(shooting_stats, nrow = 15, ncol = 15, byrow = TRUE), stringsAsFactors = FALSE)
+  
+  colnames(game_df) <- team_col_name
+  colnames(shooting_df) <- shooting_col_name
+  
+  team_df <- left_join(game_df,shooting_df)
+  team_df <- team_df[-1,]
+  
+  cols <- c('PLAYER',	'GP',	'GS',	'MIN', 'PPG',	'OFFR',	'DEFR',	'RPG',	'APG',	'SPG',	'BPG',	'TPG',	'FPG',	'ATO',	'PER',	'FGM',	'FGA',	'FGPERC',	'THRPM',	'THRPA',	'THRPPERC',	'FTM',	'FTA',	'FTPERC',	'TWOPM', 'TWOPA', 'TWOPPERC', 'PPS', 'AFGPERC')
+  colnames(team_df) <- cols
+  
+  write.csv(team_df, str_c('/home/jrodowick/NBA-Shiny/team_csv_files/',filename),append = FALSE)
 }
+
+
+## Call all functions ##
+for(i in teams) {
+  scrapePlayers(team_prepend, i[2], str_c(i[1],'.csv'))
+}
+
+scrapeLeague(league_url,o_url,d_url)
